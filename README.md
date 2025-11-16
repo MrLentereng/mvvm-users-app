@@ -1,50 +1,79 @@
-# Welcome to your Expo app 👋
+# MVVM Users App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Невеликий крос-платформний мобільний додаток на основі **React Native + Expo**, який демонструє:
+- архітектуру **MVVM**;
+- роботу з локальним сховищем;
+- використання нативних API (камера/галерея);
+- підтримку світлої/темної теми та базові анімації.
 
-## Get started
+---
 
-1. Install dependencies
+## Архітектура (MVVM)
 
-   ```bash
-   npm install
-   ```
+- **Model** – клас `User` (`src/models/User.js`), який описує користувача (ім'я, електронна пошта, телефон, шлях до фото `photoUri`).
+- **ViewModel** – хук `useUserViewModel` (`src/viewmodels/useUserViewModel.js`), який:
+  - зберігає список користувачів та індекс редагування;
+  - відповідає за додавання/оновлення користувачів;
+  - завантажує та зберігає дані у `AsyncStorage`.
+- **View** – екран `HomeScreen` (`app/(tabs)/index.tsx`), який:
+  - відображає форму додавання/редагування;
+  - показує список користувачів з аватарками;
+  - містить перемикач світлої/темної теми;
+  - виводить повідомлення про помилки валідації.
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## Використані технології
 
-In the output, you'll find options to open the app in a
+- **React Native + Expo**
+- **Expo Router**
+- **@react-native-async-storage/async-storage** – локальне сховище
+- **expo-image-picker** – доступ до камери та галереї
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Нативні API
 
-## Get a fresh project
+- Вибір фото профілю з **галереї** (`launchImageLibraryAsync`).
+- Зйомка фото через **камеру** (`launchCameraAsync`).
+- Запит дозволів:
+  - `requestMediaLibraryPermissionsAsync`
+  - `requestCameraPermissionsAsync`
+- URI зображення зберігається в полі `photoUri` моделі `User` і відображається як аватар у списку.
 
-When you're ready, run:
+---
+
+## Робота з даними та оптимізація
+
+- Список користувачів рендериться через `FlatList`, що зменшує кількість зайвих перерендерів.
+- Дані кешуються у `AsyncStorage`:
+  - при старті додатку – завантаження з локального сховища;
+  - при додаванні/редагуванні – збереження назад.
+- Операції з даними виконуються асинхронно (`async/await`).
+- Реалізована валідація:
+  - email у форматі `name@example.com`;
+  - телефон – тільки цифри, допускається `+` на початку, довжина 10–15 символів.
+
+---
+
+## UI/UX
+
+- Один головний екран: форма + список користувачів.
+- Адаптивна верстка на Flexbox, коректне відображення на різних екранах.
+- Підтримка **Light/Dark** теми.
+- Аватар: або фото, або перша літера імені.
+
+---
+
+## Анімації
+
+- Анімація натискання кнопки **«ДОДАТИ КОРИСТУВАЧА»**:
+  - кнопка плавно масштабується (`Animated + Pressable`), що дає візуальний фідбек.
+
+---
+
+## Запуск
 
 ```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+npm install
+npm run start
