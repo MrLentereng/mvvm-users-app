@@ -199,22 +199,20 @@ export default function HomeScreen() {
       return;
     }
 
-    // 🔹 Перевірка на дублікати (ім'я або email вже є в базі)
-    const duplicate = users.some((u, index) => {
-      // якщо редагуємо — пропускаємо поточного користувача
-      if (editingIndex !== null && index === editingIndex) {
-        return false;
-      }
-      const sameName =
-      u.name.trim().toLowerCase() === trimmedName.toLowerCase();
-      const sameEmail =
-      u.email.trim().toLowerCase() === trimmedEmail.toLowerCase();
-      return sameName || sameEmail;
-    });
+    // 🔹 Перевірка на дублікати ТІЛЬКИ при створенні нового користувача
+    if (editingIndex === null) {
+      const duplicate = users.some(u => {
+        const sameName =
+        u.name.trim().toLowerCase() === trimmedName.toLowerCase();
+        const sameEmail =
+        u.email.trim().toLowerCase() === trimmedEmail.toLowerCase();
+        return sameName || sameEmail;
+      });
 
-    if (duplicate) {
-      setError("Користувач з таким ім'ям або e-mail вже існує.");
-      return;
+      if (duplicate) {
+        setError("Користувач з таким ім'ям або e-mail вже існує.");
+        return;
+      }
     }
 
     // якщо все ок — очищаємо помилку і зберігаємо
@@ -238,6 +236,7 @@ export default function HomeScreen() {
     setPhone('');
     setPhotoUri(null);
   }
+
 
 
 
