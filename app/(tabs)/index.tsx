@@ -12,6 +12,7 @@ import {
   Pressable,
   Animated,
   Alert,
+  Platform,
 } from 'react-native';
 
 import { useColorScheme } from 'react-native';
@@ -19,6 +20,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { useUserViewModel } from '../../src/viewmodels/useUserViewModel';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+declare const window: any;
 
 
 export default function HomeScreen() {
@@ -28,9 +31,11 @@ export default function HomeScreen() {
     loading,
     addUser,
     updateUser,
+    deleteUser,
     startEdit,
     clearEdit,
   } = useUserViewModel();
+
   const systemScheme = useColorScheme();
   const [isDark, setIsDark] = useState(systemScheme === 'dark');
 
@@ -128,6 +133,45 @@ export default function HomeScreen() {
     }
   }
 
+  function handleDelete(index: number) {
+    const user = users[index];
+
+    // Web: використаємо звичайний window.confirm
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') {
+        const ok = window.confirm(
+          `Ви дійсно хочете видалити користувача "${user.name}"?`
+        );
+        if (ok) {
+          deleteUser(index);
+        }
+      }
+      return;
+    }
+
+    // Мобільні платформи: нормальний Alert
+    Alert.alert(
+      'Підтвердження',
+      `Ви дійсно хочете видалити користувача "${user.name}"?`,
+      [
+        {
+          text: 'Видалити',
+          style: 'destructive',
+          onPress: () => {
+            deleteUser(index);
+          },
+        },
+        {
+          text: 'Скасувати',
+          style: 'cancel',
+        },
+      ]
+    );
+  }
+
+
+
+
   function handleSubmit() {
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();
@@ -155,7 +199,25 @@ export default function HomeScreen() {
       return;
     }
 
-    // якщо все ок — очищаємо помилку
+    // 🔹 Перевірка на дублікати (ім'я або email вже є в базі)
+    const duplicate = users.some((u, index) => {
+      // якщо редагуємо — пропускаємо поточного користувача
+      if (editingIndex !== null && index === editingIndex) {
+        return false;
+      }
+      const sameName =
+      u.name.trim().toLowerCase() === trimmedName.toLowerCase();
+      const sameEmail =
+      u.email.trim().toLowerCase() === trimmedEmail.toLowerCase();
+      return sameName || sameEmail;
+    });
+
+    if (duplicate) {
+      setError("Користувач з таким ім'ям або e-mail вже існує.");
+      return;
+    }
+
+    // якщо все ок — очищаємо помилку і зберігаємо
     setError(null);
 
     if (editingIndex === null) {
@@ -176,6 +238,8 @@ export default function HomeScreen() {
     setPhone('');
     setPhotoUri(null);
   }
+
+
 
 
 
@@ -286,26 +350,42 @@ export default function HomeScreen() {
     renderItem={({ item, index }) => {
       return (
         <View style={styles.userItem}>
-        {item.photoUri ? (
-          <Image source={{ uri: item.photoUri }} style={styles.avatar} />
-        ) : (
-          <View style={styles.avatarPlaceholder}>
-          <Text style={styles.avatarInitial}>
-          {item.name?.[0]?.toUpperCase() ?? '?'}
-          </Text>
+          {item.photoUri ? (
+            <Image source={{ uri: item.photoUri }} style={styles.avatar} />
+          ) : (
+            <View style={styles.avatarPlaceholder}>
+              <Text style={styles.avatarInitial}>
+                {item.name?.[0]?.toUpperCase() ?? '?'}
+              </Text>
+            </View>
+          )}
+
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.userName, { color: theme.text }]}>
+              {item.name}
+            </Text>
+            <Text style={{ color: theme.text }}>{item.email}</Text>
+            <Text style={{ color: theme.text }}>{item.phone}</Text>
           </View>
-        )}
 
-        <View style={{ flex: 1 }}>
-        <Text style={[styles.userName, { color: theme.text }]}>{item.name}</Text>
-        <Text style={{ color: theme.text }}>{item.email}</Text>
-        <Text style={{ color: theme.text }}>{item.phone}</Text>
-        </View>
+          <View style={styles.actionsRow}>
+          <Button
+          title="Видалити"
+          color="#d32f2f"
+          onPress={() => handleDelete(index)}
+          />
+          <View style={{ width: 6 }} />
+          <Button
+          title="Редагувати"
+          onPress={() => startEdit(index)}
+          />
+          </View>
 
-        <Button title="Редагувати" onPress={() => startEdit(index)} />
+
         </View>
       );
     }}
+
     ListEmptyComponent={
       <Text style={[styles.empty, { color: theme.placeholder }]}>
       Поки що немає користувачів
@@ -420,5 +500,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontSize: 14,
   },
+  actionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+
 
 });

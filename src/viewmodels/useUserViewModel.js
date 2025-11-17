@@ -60,6 +60,20 @@ export function useUserViewModel() {
     persist(next);
   }
 
+  function deleteUser(index) {
+    const next = users.filter((_, i) => i !== index);
+
+    // оновлюємо editingIndex, щоб не зламати режим редагування
+    setEditingIndex(prev => {
+      if (prev === null) return null;
+      if (prev === index) return null;      // видалили саме того, кого редагували
+      if (prev > index) return prev - 1;    // зрушуємо індекс на 1 вліво
+      return prev;
+    });
+
+    persist(next);
+  }
+
   function startEdit(index) {
     setEditingIndex(index);
   }
@@ -74,6 +88,7 @@ export function useUserViewModel() {
     loading,
     addUser,
     updateUser,
+    deleteUser,
     startEdit,
     clearEdit,
   };
